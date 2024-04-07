@@ -1,6 +1,6 @@
 Package.describe({
   name: 'liristech:create-config',
-  version: '0.0.1',
+  version: '0.0.2',
   summary: 'Data-driven configuration for your app logic overridable from Meteor Collections',
   git: 'https://github.com/liris-tech/create-config.git',
   documentation: 'README.md'

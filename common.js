@@ -35,7 +35,7 @@ import _ from 'lodash';
  * // => returns {height: 'small', width: 'medium'} thanks to the merge.
  */
 export function createConfig(staticPart, dynamicPart=[]) {
-    return (path, config=staticPart) => {
+    return (path, opts={}, config=staticPart) => {
         const _path =
             _.isString(path) ? path.split('.')
           : _.isArray(path) ? path
@@ -46,8 +46,14 @@ export function createConfig(staticPart, dynamicPart=[]) {
         const valuesFromDb = _(dynamicPart)
             .map(spec => {
                 const {collection, selector, pathPrefix} = spec;
+
+                const _collection =
+                    _.isFunction(collection) ? collection(opts)
+                  : collection?.find ? collection
+                  : new Error(`collection should either be a function or a Meteor Collection. Received ${collection} (in ${spec})`);
+
                 const _selector =
-                    _.isFunction(selector) ? selector()
+                    _.isFunction(selector) ? selector(opts)
                   : _.isPlainObject(selector) ? selector
                   : new Error(`selector should either be a function or an object. Received ${selector} (in ${spec})`);
                 if (_.isError(_selector)) throw _selector;
@@ -64,8 +70,8 @@ export function createConfig(staticPart, dynamicPart=[]) {
                 // restraining the fields of the query only on the client, in case it is executed
                 // in a reactive context.
                 const doc = Meteor.isClient
-                    ? collection.findOne(_selector, {fields: {[pathInDocument]: 1}})
-                    : collection.findOne(_selector);
+                    ? _collection.findOne(_selector, {fields: {[pathInDocument]: 1}})
+                    : _collection.findOne(_selector);
 
                 return _.get(doc, pathInDocument);
             })
